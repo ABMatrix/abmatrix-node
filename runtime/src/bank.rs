@@ -77,14 +77,16 @@ decl_module! {
 
         /// withdraw
         /// origin, message: Vec<u8>, signature: Vec<u8>
-         pub fn withdraw(_origin, message: Vec<u8>, _signature: Vec<u8>) -> Result {
+         pub fn withdraw(_origin, message: Vec<u8>, signature: Vec<u8>) -> Result {
+
             // 解析message --> hash  tag  id  amount
-            let mut messagedrain = message.clone();
-            let _hash:Vec<_> = messagedrain.drain(0..32).collect();
-
-            let id:Vec<_> = messagedrain.drain(32..64).collect();
-            let who: T::AccountId = Decode::decode(&mut &id.encode()[..]).unwrap();
-
+            let (tx_hash,who,_amount,signature_hash) = Self::split_message(message,signature);
+            //check the validity and number of signatures
+            if Self::check_signature(who.clone(),tx_hash,signature_hash).is_ok(){
+                runtime_io::print("deposit -> account balance");
+            } else{
+                return Err("not enough signature or bad signature");
+            }
 
             // ensure no repeat
             ensure!(!Self::despositing_account().iter().find(|&t| t == &who).is_none(), "Cannot deposit if not depositing.");
