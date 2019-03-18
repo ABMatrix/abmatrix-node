@@ -243,7 +243,11 @@ impl<T: Trait> Module<T>
         });
 
         //ensure the signature is valid
-        //ensure!(Self::check_secp512(&hash[..],&signature[..]),"not valid signature");
+        let mut tx_hash_to_check:[u8;65] = [0;65];
+        tx_hash_to_check.clone_from_slice(&hash);
+        let mut signature_hash_to_check:[u8;32] = [0;32];
+        signature_hash_to_check.clone_from_slice(&signature);
+        ensure!(Self::check_secp512(&tx_hash_to_check,&signature_hash_to_check),"not valid signature");
        
         return (tx_hash,who,amount,signature_hash);
     }
