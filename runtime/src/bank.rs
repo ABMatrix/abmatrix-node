@@ -233,7 +233,7 @@ impl<T: Trait> Module<T>
 
         let id:Vec<_> = messagedrain.drain(32..64).collect();
         let who: T::AccountId = Decode::decode(&mut &id.encode()[..]).unwrap();
-        let amount_vec:Vec<u8> = messagedrain.drain(32..64).collect();
+        let amount_vec:Vec<u8> = messagedrain.drain(32..40).collect();
         let mut amount: u64 = 0;
         let mut i = 0;
         amount_vec.iter().for_each(|x|{
