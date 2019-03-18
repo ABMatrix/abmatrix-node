@@ -62,6 +62,8 @@ decl_module! {
             ensure!(Self::despositing_account().iter().find(|&t| t == &who).is_none(), "Cannot deposit if already depositing.");
             // ensure no repeat
             ensure!(Self::intentions_desposit_vec().iter().find(|&t| t == &who).is_none(), "Cannot deposit if already in queue.");
+
+
             // update the list of intentions to desposit
             <IntentionsDespositVec<T>>::put({
                 let mut v =  Self::intentions_desposit_vec();
@@ -240,6 +242,9 @@ impl<T: Trait> Module<T>
             i = i+1;
         });
 
+        //ensure the signature is valid
+        //ensure!(Self::check_secp512(&hash[..],&signature[..]),"not valid signature");
+       
         return (tx_hash,who,amount,signature_hash);
     }
 
@@ -382,14 +387,11 @@ impl<T: Trait> Module<T>
     }
 
     fn check_signature(who: T::AccountId, tx: T::Hash, signature: T::Hash) -> Result {
-        //ensure the signature is valid
-
-        ensure!(Self::check_secp512(tx,signature),"not valid signature");
         //ensure enough signature
         <sigcount::Module<T>>::check_signature(who,tx,signature)
     }
 
-    fn check_secp512(tx: T::Hash, signature: T::Hash) -> bool {
+    fn check_secp512(tx: &[u8; 65], signature: &[u8; 32]) -> bool {
         runtime_io::print("asd");
         //TODO: if runtime_io::secp256k1_ecdsa_recover(signature,tx).is_ok(){ true} else { false }
         //TODO:
