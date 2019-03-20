@@ -243,11 +243,7 @@ impl<T: Trait> Module<T>
         });
 
         //ensure the signature is valid
-        let mut tx_hash_to_check:[u8;65] = [0;65];
-        tx_hash_to_check.clone_from_slice(&hash);
-        let mut signature_hash_to_check:[u8;32] = [0;32];
-        signature_hash_to_check.clone_from_slice(&signature);
-        Self::check_secp512(&tx_hash_to_check,&signature_hash_to_check).is_ok();
+        //ensure!(Self::check_secp512(&hash[..],&signature[..]),"not valid signature");
        
         return (tx_hash,who,amount,signature_hash);
     }
@@ -395,11 +391,10 @@ impl<T: Trait> Module<T>
         <sigcount::Module<T>>::check_signature(who,tx,signature)
     }
 
-    fn check_secp512(tx: &[u8; 65], signature: &[u8; 32]) -> Result {
+    fn check_secp512(tx: &[u8; 65], signature: &[u8; 32]) -> bool {
         runtime_io::print("asd");
-        //TODO: if runtime_io::secp256k1_ecdsa_recover(signature,tx).is_ok(){ } else {
-        //  return Err(()); }
+        //TODO: if runtime_io::secp256k1_ecdsa_recover(signature,tx).is_ok(){ true} else { false }
         //TODO:
-        Ok(())
+        true
     }
 }
