@@ -6,7 +6,7 @@ use std::str::FromStr;
 
 pub const ETH_COIN: &str = "0000000000000000000000000000000000000000000000000000000000000001";
 pub const MESSAGE_LENGTH: usize = 116;
-pub const BANKER_LENGTH: usize = 116;
+pub const BANKER_LENGTH: usize = 128;
 pub const AUTHORITY_MINIMUM_LENGTH: usize = 72;
 
 #[derive(Debug)]
@@ -102,7 +102,7 @@ impl EgressEvent {
 #[derive(Debug)]
 pub struct DepositEvent {
     pub coin: H256,
-    pub recipient: Address,
+    pub recipient: H256,
     pub value: U256,
     pub tx_hash: H256,
 }
@@ -128,18 +128,18 @@ impl DepositEvent {
 
         Ok(Self {
             coin: bytes[0..32].into(),
-            recipient: bytes[32..52].into(),
-            value: U256::from_big_endian(&bytes[52..84]),
-            tx_hash: bytes[84..BANKER_LENGTH].into(),
+            recipient: bytes[32..64].into(),
+            value: U256::from_big_endian(&bytes[64..96]),
+            tx_hash: bytes[96..BANKER_LENGTH].into(),
         })
     }
 
     pub fn to_bytes(&self) -> Vec<u8> {
         let mut result = vec![0u8; BANKER_LENGTH];
         result[0..32].copy_from_slice(&self.coin.0[..]);
-        result[32..52].copy_from_slice(&self.recipient.0[..]);
-        self.value.to_big_endian(&mut result[52..84]);
-        result[84..BANKER_LENGTH].copy_from_slice(&self.tx_hash.0[..]);
+        result[32..64].copy_from_slice(&self.recipient.0[..]);
+        self.value.to_big_endian(&mut result[64..96]);
+        result[96..BANKER_LENGTH].copy_from_slice(&self.tx_hash.0[..]);
         return result;
     }
 }
@@ -147,7 +147,7 @@ impl DepositEvent {
 #[derive(Debug)]
 pub struct WithdrawEvent {
     pub coin: H256,
-    pub recipient: Address,
+    pub recipient: H256,
     pub value: U256,
     pub tx_hash: H256,
 }
@@ -173,18 +173,18 @@ impl WithdrawEvent {
 
         Ok(Self {
             coin: bytes[0..32].into(),
-            recipient: bytes[32..52].into(),
-            value: U256::from_big_endian(&bytes[52..84]),
-            tx_hash: bytes[84..BANKER_LENGTH].into(),
+            recipient: bytes[32..64].into(),
+            value: U256::from_big_endian(&bytes[64..96]),
+            tx_hash: bytes[96..BANKER_LENGTH].into(),
         })
     }
 
     pub fn to_bytes(&self) -> Vec<u8> {
         let mut result = vec![0u8; BANKER_LENGTH];
         result[0..32].copy_from_slice(&self.coin.0[..]);
-        result[32..52].copy_from_slice(&self.recipient.0[..]);
-        self.value.to_big_endian(&mut result[52..84]);
-        result[84..BANKER_LENGTH].copy_from_slice(&self.tx_hash.0[..]);
+        result[32..64].copy_from_slice(&self.recipient.0[..]);
+        self.value.to_big_endian(&mut result[64..94]);
+        result[94..BANKER_LENGTH].copy_from_slice(&self.tx_hash.0[..]);
         return result;
     }
 }
