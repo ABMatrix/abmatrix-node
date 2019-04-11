@@ -49,7 +49,7 @@ decl_module! {
 
             // 解析message --> 以太坊交易的hash tx_hash  abmatrix上的账号who
             //                 该账号的抵押数量amount   整个交易的签名signature_hash
-            let (_tx_hash, who, amount, signature_hash) = Self::split_message(message.clone(),signature);
+            let (_tx_hash, who, amount, signature_hash,_coin_hash) = Self::split_message(message.clone(),signature);
             // 整个交易的hash
             let message_hash = Decode::decode(&mut &message.encode()[..]).unwrap();
 
@@ -157,7 +157,7 @@ decl_module! {
             let validators = <session::Module<T>>::validators();
             ensure!(validators.contains(&sender),"Not validator");
             // 解析message --> hash  tag  id  amount
-            let (_tx_hash,who,_amount,signature_hash) = Self::split_message(message.clone(),signature);
+            let (_tx_hash,who,_amount,signature_hash,_coin_hash) = Self::split_message(message.clone(),signature);
             let message_hash = Decode::decode(&mut &message.encode()[..]).unwrap();
 
             //check the validity and number of signatures
@@ -334,19 +334,20 @@ decl_event! {
 
 impl<T: Trait> Module<T>
 {
-    fn  split_message( message: Vec<u8>, signature: Vec<u8>) -> (T::Hash,T::AccountId,u64,T::Hash) {
+    fn  split_message( message: Vec<u8>, signature: Vec<u8>) -> (T::Hash,T::AccountId,u64,T::Hash,T::Hash) {
         // 解析message --> hash  tag  id  amount
         let mut messagedrain = message.clone();
 
-        let hash:Vec<_> = messagedrain.drain(0..32).collect();
+        // Coin 0-32
+        let coin_vec: Vec<_> = messagedrain.drain(0..32).collect();
+        let coint_hash= Decode::decode(&mut &coin_vec.encode()[..]).unwrap();
 
-        let tx_hash = Decode::decode(&mut &hash.encode()[..]).unwrap();
+        // Who 33-64
+        let who_vec: Vec<_> = messagedrain.drain(0..32).collect();
+        let who: T::AccountId = Decode::decode(&mut &who_vec.encode()[..]).unwrap();
 
-        let signature_hash =  Decode::decode(&mut &signature.encode()[..]).unwrap();
-
-        let id:Vec<_> = messagedrain.drain(32..64).collect();
-        let who: T::AccountId = Decode::decode(&mut &id.encode()[..]).unwrap();
-        let amount_vec:Vec<u8> = messagedrain.drain(32..40).collect();
+        //65-96
+        let amount_vec:Vec<u8> = messagedrain.drain(0..32).collect();
         let mut amount: u64 = 0;
         let mut i = 0;
         amount_vec.iter().for_each(|x|{
@@ -355,6 +356,13 @@ impl<T: Trait> Module<T>
             i = i+1;
         });
 
+        // Tx_Hash 97-128
+        let hash:Vec<_> = messagedrain.drain(0..32).collect();
+        let tx_hash = Decode::decode(&mut &hash.encode()[..]).unwrap();
+
+        // Signature_Hash
+        let signature_hash =  Decode::decode(&mut &signature.encode()[..]).unwrap();
+
         //ensure the signature is valid
         let mut tx_hash_to_check:[u8;65] = [0;65];
         tx_hash_to_check.clone_from_slice(&hash);
@@ -362,7 +370,16 @@ impl<T: Trait> Module<T>
         signature_hash_to_check.clone_from_slice(&signature);
         Self::check_secp512(&tx_hash_to_check,&signature_hash_to_check).is_ok();
        
-        return (tx_hash,who,amount,signature_hash);
+        return (tx_hash,who,amount,signature_hash,coint_hash);
+    }
+
+    pub fn signature521(signature: Vec<u8>, hash: Vec<u8>){
+        //ensure the signature is valid
+        let mut tx_hash_to_check:[u8;65] = [0;65];
+        tx_hash_to_check.clone_from_slice(&hash);
+        let mut signature_hash_to_check:[u8;32] = [0;32];
+        signature_hash_to_check.clone_from_slice(&signature);
+        Self::check_secp512(&tx_hash_to_check,&signature_hash_to_check).is_ok();
     }
 
     /// Hook to be called after transaction processing.  间隔一段时间才触发 rotate_session
@@ -550,7 +567,7 @@ impl<T: Trait> Module<T>
         <sigcount::Module<T>>::check_signature(who,tx,signature ,message_hash)
     }
 
-    pub fn check_secp512(tx: &[u8; 65], signature: &[u8; 32]) -> Result {
+    pub fn check_secp512(signature: &[u8; 65], tx: &[u8; 32]) -> Result {
         runtime_io::print("asd");
         //TODO: if runtime_io::secp256k1_ecdsa_recover(signature,tx).is_ok(){ } else {
         //  return Err(()); }
