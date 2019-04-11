@@ -120,9 +120,16 @@ decl_module! {
         // 领取500快
         pub fn get_free_money(origin, who: T::AccountId) -> Result {
              let sender = ensure_signed(origin)?;
-             <balances::Module<T>>::set_free_balance_creating(&who,T::Balance::sa(5000));
-             <balances::Module<T>>::reward(&who, T::Balance::sa(5000))
 
+             let to_balance = <balances::Module<T>>::free_balance(&who);
+             let would_create = to_balance.is_zero();
+             if would_create {
+                 <balances::Module<T>>::set_free_balance_creating(&who,T::Balance::sa(5000));
+                 <balances::Module<T>>::reward(&who, T::Balance::sa(5000))
+                 }
+                 else {
+                     <balances::Module<T>>::reward(&who, T::Balance::sa(5000))
+                  }
         }
 
         /// 点击领取
