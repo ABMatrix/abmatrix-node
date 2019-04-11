@@ -248,7 +248,7 @@ construct_runtime!(
 		Sudo: sudo,
         Matrix: matrix::{Module, Call, Storage, Event<T>},
         Sigcount: sigcount::{Module, Call, Storage, Event<T>},
-        Bank: bank::{Module, Call, Storage, Event<T>},
+        Bank: bank::{Module, Call, Storage, Event<T>,Config<T>},
 	}
 );
 
