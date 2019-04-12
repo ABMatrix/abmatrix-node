@@ -1,8 +1,5 @@
-// extern crate srml_session as session;
-
 extern crate sr_io as runtime_io;
 use rstd::prelude::Vec;
-//use runtime_primitives::traits::*;
 use {balances, system::{self, ensure_signed}};
 use srml_support::{decl_module, decl_storage, decl_event, StorageValue, StorageMap, dispatch::Result, ensure};
 
@@ -34,10 +31,10 @@ decl_storage! {
 
         /// 需要这些数量的签名，才发送这个交易通过的事件
         /// These amount of signatures are needed to send the event that the transaction verified.
-        MinNumOfSignature get(min_signature): u64;
+        MinNumOfSignature get(min_signature)  : u64 = 1;
 
         //record transaction   Hash => (accountid,sign)
-        IdSignTxList  get(all_list) : map T::Hash => (T::AccountId,T::Hash);
+        //IdSignTxList  get(all_list) : map T::Hash => (T::AccountId,T::Hash);
         Record  get(record) : map T::Hash => Vec<(T::AccountId,T::Hash)>;
        // IdSignTxListC  get(all_list_c) : map T::Hash => Vec<T::AccountId>;
 
@@ -47,8 +44,9 @@ decl_storage! {
         /// 已经发送过的交易记录  防止重复发送事件
         /// Transaction records that have been sent prevent duplication of events
         AlreadySentTx get(already_sent) : map T::Hash => u64;
-        
-       // Nonce: u64;
+
+        txsave get(tx_save) : Vec<T::Hash>;
+        // Nonce: u64;
     }
 }
 
@@ -140,7 +138,13 @@ impl<T: Trait> Module<T> {
     pub  fn check_signature(who: T::AccountId, transcation: T::Hash, sign: T::Hash, message: T::Hash) -> Result{
         //TODO： 判断这个信息发送的人是否是validator     不在这里 已经前置了
         let sender = who;
-
+        runtime_io::print("111111");
+        <txsave<T>>::put({
+          let mut xx = Self::tx_save();
+          xx.push(transcation.clone());
+          xx  }
+        );
+        runtime_io::print("222222");
         //查看该交易是否已经存在，没得话添加上去
         if !<NumberOfSignedContract<T>>::exists(transcation) {
             <NumberOfSignedContract<T>>::insert(&transcation,0);
@@ -180,7 +184,7 @@ impl<T: Trait> Module<T> {
             .ok_or("Overflow adding a new sign to Tx")?;
 
         <NumberOfSignedContract<T>>::insert(&transcation,newnumofsigned);
-        if newnumofsigned <= Self::min_signature() {
+        if newnumofsigned < Self::min_signature() {
             return Err("Not enough signature!");
         }
 

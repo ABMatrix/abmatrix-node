@@ -4,13 +4,9 @@ extern crate sr_io as runtime_io;
 extern crate substrate_primitives as primitives;
 extern crate srml_support;
 use runtime_primitives::codec::{Decode, Encode};
-//use codec::{Decode, Encode};
-
-//use support::traits::Currency;
 use session::*;
 use rstd::prelude::Vec;
 use runtime_primitives::traits::*;
-//use srml_support::{StorageValue, StorageMap, dispatch::Result};
 use srml_support::{StorageValue, StorageMap, dispatch::Result};
 use system::{self, ensure_signed};
 use sigcount;
@@ -42,17 +38,17 @@ decl_module! {
         //(origin, message: Vec, signature: Vec)
         pub fn deposit(origin, message: Vec<u8>, signature: Vec<u8>) -> Result {
             let sender = ensure_signed(origin)?;
-
-            //TODO: 在这里判断 sender 是否有权限提交
+            runtime_io::print("====================deposit===============");
+/*
+            //TODO: 在这里判断 sender 是否有权限提交 后期启动节点时写入
             let validators = <session::Module<T>>::validators();
             ensure!(validators.contains(&sender),"Not validator");
-
+*/
             // 解析message --> 以太坊交易的hash tx_hash  abmatrix上的账号who
             //                 该账号的抵押数量amount   整个交易的签名signature_hash
-            let (_tx_hash, who, amount, signature_hash,_coin_hash) = Self::split_message(message.clone(),signature);
+            let (tx_hash, who, amount, signature_hash,_coin_hash) = Self::split_message(message.clone(),signature);
             // 整个交易的hash
-            let message_hash = Decode::decode(&mut &message.encode()[..]).unwrap();
-
+            //let message_hash = Decode::decode(&mut &message.encode()[..]).unwrap();
             runtime_io::print("开始判断是否重复抵押");
             // ensure no repeat desposit
             ensure!(Self::despositing_account().iter().find(|&t| t == &who).is_none(), "Cannot deposit if already depositing.");
@@ -61,11 +57,10 @@ decl_module! {
 
             //check the validity and number of signatures
             runtime_io::print("开始检查签名");
-            match  Self::check_signature(sender.clone(), message_hash, signature_hash, message_hash){
+            match  Self::check_signature(sender.clone(), tx_hash, signature_hash, tx_hash){
                 Ok(y) =>  runtime_io::print("ok") ,
                 Err(x) => return Err(x),
             }
-
             // update the list of intentions to desposit
             runtime_io::print("抵押账号通过验证=>存储其 accountid 和 balance 入intentions");
             // update the list of intentions to desposit
@@ -307,6 +302,9 @@ decl_storage! {
 		EnableRewardRecord get(enable_record) config(): bool;
         /// 全链总余额
         TotalDespositingBalacne  get(total_despositing_balance) config(): T::Balance;
+
+
+        save get(save_tx) : Vec<Vec<u8>>;
     }
 }
 
@@ -335,41 +333,45 @@ decl_event! {
 impl<T: Trait> Module<T>
 {
     fn  split_message( message: Vec<u8>, signature: Vec<u8>) -> (T::Hash,T::AccountId,u64,T::Hash,T::Hash) {
+
         // 解析message --> hash  tag  id  amount
         let mut messagedrain = message.clone();
 
         // Coin 0-32
         let coin_vec: Vec<_> = messagedrain.drain(0..32).collect();
-        let coint_hash= Decode::decode(&mut &coin_vec.encode()[..]).unwrap();
+        let coint_hash= Decode::decode(&mut &coin_vec[..]).unwrap();
 
         // Who 33-64
         let who_vec: Vec<_> = messagedrain.drain(0..32).collect();
-        let who: T::AccountId = Decode::decode(&mut &who_vec.encode()[..]).unwrap();
+        let who: T::AccountId = Decode::decode(&mut &who_vec[..]).unwrap();
 
         //65-96
-        let amount_vec:Vec<u8> = messagedrain.drain(0..32).collect();
+        let mut amount_vec:Vec<u8> = messagedrain.drain(0..32).collect();
+        amount_vec.reverse();
         let mut amount: u64 = 0;
         let mut i = 0;
         amount_vec.iter().for_each(|x|{
-            let exp = (*x as u64)^i;
+            let exp = (*x as u64)*10^i;
             amount = amount+exp;
             i = i+1;
         });
+        println!("amount{:?}",amount_vec);
+        println!("amount number {:?}", amount);
 
         // Tx_Hash 97-128
-        let hash:Vec<_> = messagedrain.drain(0..32).collect();
-        let tx_hash = Decode::decode(&mut &hash.encode()[..]).unwrap();
+        let hash:Vec<u8> = messagedrain.drain(0..32).collect();
+        let tx_hash = Decode::decode(&mut &hash[..]).unwrap();
 
         // Signature_Hash
-        let signature_hash =  Decode::decode(&mut &signature.encode()[..]).unwrap();
+        let signature_hash =  Decode::decode(&mut &signature[..]).unwrap();
 
-        //ensure the signature is valid
-        let mut tx_hash_to_check:[u8;65] = [0;65];
-        tx_hash_to_check.clone_from_slice(&hash);
-        let mut signature_hash_to_check:[u8;32] = [0;32];
-        signature_hash_to_check.clone_from_slice(&signature);
-        Self::check_secp512(&tx_hash_to_check,&signature_hash_to_check).is_ok();
-       
+        <save<T>>::put({
+            let mut xx = Self::save_tx();
+            xx.push(hash.clone());
+            xx.push(who_vec.clone());
+            xx  }
+        );
+
         return (tx_hash,who,amount,signature_hash,coint_hash);
     }
 

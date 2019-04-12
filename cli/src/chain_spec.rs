@@ -4,7 +4,7 @@ use primitives::{Ed25519AuthorityId, ed25519};
 use node_primitives::AccountId;
 use node_runtime::{ConsensusConfig, CouncilSeatsConfig, CouncilVotingConfig, DemocracyConfig,
 	SessionConfig, StakingConfig, TimestampConfig, BalancesConfig, TreasuryConfig,
-	SudoConfig, ContractConfig, GrandpaConfig, IndicesConfig, Permill, Perbill,BankConfig};
+	SudoConfig, ContractConfig, GrandpaConfig, IndicesConfig, Permill, Perbill, BankConfig};
 pub use node_runtime::GenesisConfig;
 use substrate_service;
 
@@ -126,9 +126,9 @@ fn staging_testnet_config_genesis() -> GenesisConfig {
 			enable_record: true,
 			session_length: 10,
 			reward_session_value: vec![1000,5000,60000,80000],
-			reward_session_factor: vec![5,5,5,5],
+			reward_session_factor: vec![1,2,3,3],
 			reward_balance_value: vec![1000,5000,60000,80000],
-			reward_balance_factor: vec![5,5,5,5],
+			reward_balance_factor: vec![1,2,3,3],
 			total_despositing_balance:0,
 		})
 	}
@@ -262,9 +262,9 @@ pub fn testnet_genesis(
 			enable_record: true,
 			session_length: 10,
 			reward_session_value: vec![1000,5000,60000,80000],
-			reward_session_factor: vec![5,5,5,5],
+			reward_session_factor: vec![1,2,3,3],
 			reward_balance_value: vec![1000,5000,60000,80000],
-			reward_balance_factor: vec![5,5,5,5],
+			reward_balance_factor: vec![1,2,3,3],
 			total_despositing_balance:0 ,
 		})
 	}

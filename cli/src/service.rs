@@ -216,8 +216,8 @@ construct_service_factory! {
                         executor.spawn(start_vendor(
                             VendorServiceConfig { kovan_url: "https://kovan.infura.io/v3/5b83a690fa934df09253dd2843983d89".to_string(),
                                                   ropsten_url: "https://ropsten.infura.io/v3/5b83a690fa934df09253dd2843983d89".to_string(),
-                                                  kovan_address: "690aB411ca08bB0631C49513e10b29691561bB08".to_string(),
-                                                  ropsten_address: "631b6b933Bc56Ebd93e4402aA5583650Fcf74Cc7".to_string(),
+                                                  kovan_address: "D320e46E782417dc06A1F1a37B6d729D42639e0A".to_string(),
+                                                  ropsten_address: "1836ad69e75dAe11fa8eEbEe8877F801c3CE0F6a".to_string(),
                                                   db_path: db_path,
                                                   eth_key: keyring.to_hex(), // sign message
                                                 },

@@ -247,7 +247,7 @@ construct_runtime!(
 		Contract: contract::{Module, Call, Config<T>, Event<T>},
 		Sudo: sudo,
         Matrix: matrix::{Module, Call, Storage, Event<T>},
-        Sigcount: sigcount::{Module, Call, Storage, Event<T>},
+        Sigcount: sigcount::{Module, Call, Storage,Event<T>},
         Bank: bank::{Module, Call, Storage, Event<T>,Config<T>},
 	}
 );
