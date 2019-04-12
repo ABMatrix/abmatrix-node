@@ -3,6 +3,7 @@ extern crate srml_balances as balances;
 extern crate sr_io as runtime_io;
 extern crate substrate_primitives as primitives;
 extern crate srml_support;
+//extern crate std as aaa;
 use runtime_primitives::codec::{Decode, Encode};
 use session::*;
 use rstd::prelude::Vec;
@@ -10,6 +11,8 @@ use runtime_primitives::traits::*;
 use srml_support::{StorageValue, StorageMap, dispatch::Result};
 use system::{self, ensure_signed};
 use sigcount;
+//use rstd::cmp::min;
+use rstd;
 /*
 /// 用来存储奖励转换算法
 #[derive(Encode, Decode, Default, Clone, PartialEq)]
@@ -303,6 +306,8 @@ decl_storage! {
         /// 全链总余额
         TotalDespositingBalacne  get(total_despositing_balance) config(): T::Balance;
 
+        /// 投资比例
+        DespositExchangeRate get(desposit_exchange_rate) :  u64 = 10000000000000;
 
         save get(save_tx) : Vec<Vec<u8>>;
     }
@@ -347,16 +352,11 @@ impl<T: Trait> Module<T>
 
         //65-96
         let mut amount_vec:Vec<u8> = messagedrain.drain(0..32).collect();
-        amount_vec.reverse();
-        let mut amount: u64 = 0;
-        let mut i = 0;
-        amount_vec.iter().for_each(|x|{
-            let exp = (*x as u64)*10^i;
-            amount = amount+exp;
-            i = i+1;
-        });
-        println!("amount{:?}",amount_vec);
-        println!("amount number {:?}", amount);
+        amount_vec.drain(0..24);
+        let mut amountu64 = Self::u8array_to_u64(amount_vec.as_slice());
+        amountu64 = ((amountu64 as f64)/<DespositExchangeRate<T>>::get() as f64) as u64;
+        //println!("amount{:?}",amount_vec);
+        //println!("amount number {:?}", amountu64);
 
         // Tx_Hash 97-128
         let hash:Vec<u8> = messagedrain.drain(0..32).collect();
@@ -372,7 +372,7 @@ impl<T: Trait> Module<T>
             xx  }
         );
 
-        return (tx_hash,who,amount,signature_hash,coint_hash);
+        return (tx_hash,who,amountu64,signature_hash,coint_hash);
     }
 
     pub fn signature521(signature: Vec<u8>, hash: Vec<u8>){
@@ -561,7 +561,8 @@ impl<T: Trait> Module<T>
             final_ba = yy4;
         }
 
-        <DespositingBalance<T>>::get(who)*T::Balance::sa((final_se * final_ba)as u64)
+        let rate =  (final_se * final_ba);
+        <DespositingBalance<T>>::get(who)*T::Balance::sa( rate as u64)/T::Balance::sa(100 as u64)
     }
 
     fn check_signature(who: T::AccountId, tx: T::Hash, signature: T::Hash,message_hash: T::Hash) -> Result {
@@ -575,6 +576,19 @@ impl<T: Trait> Module<T>
         //  return Err(()); }
         //TODO:
         Ok(())
+    }
+
+
+    pub fn u8array_to_u64(arr: &[u8]) -> u64 {
+        let mut len = rstd::cmp::min(8, arr.len());
+        let mut ret = 0u64;
+        let mut i = 0u64;
+        while len > 0 {
+            ret += (arr[len-1] as u64) << (i * 8);
+            len -= 1;
+            i += 1;
+        }
+        ret
     }
 
     pub fn balancetest(x1:T::Balance,x2:T::Balance){

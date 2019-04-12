@@ -262,9 +262,9 @@ pub fn testnet_genesis(
 			enable_record: true,
 			session_length: 10,
 			reward_session_value: vec![1000,5000,60000,80000],
-			reward_session_factor: vec![1,2,3,3],
+			reward_session_factor: vec![1,2,3,4],
 			reward_balance_value: vec![1000,5000,60000,80000],
-			reward_balance_factor: vec![1,2,3,3],
+			reward_balance_factor: vec![1,2,3,4],
 			total_despositing_balance:0 ,
 		})
 	}
