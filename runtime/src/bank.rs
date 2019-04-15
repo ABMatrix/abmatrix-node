@@ -78,6 +78,45 @@ decl_module! {
             Ok(())
         }
 
+        /// 追加
+        pub fn more_deposit(origin, message: Vec<u8>, signature: Vec<u8>) -> Result{
+             let sender = ensure_signed(origin)?;
+             runtime_io::print("===============more_deposit===============");
+
+                // 解析message --> 以太坊交易的hash tx_hash  abmatrix上的账号who
+            //                 该账号的抵押数量amount   整个交易的签名signature_hash
+            let (tx_hash, who, amount, signature_hash,_coin_hash) = Self::split_message(message.clone(),signature);
+            // 整个交易的hash
+            //let message_hash = Decode::decode(&mut &message.encode()[..]).unwrap();
+            runtime_io::print("开始判断是否重复抵押");
+            // ensure no repeat desposit
+            ensure!(!Self::despositing_account().iter().find(|&t| t == &who).is_none(), "Cannot more deposit if not depositing.");
+            // ensure no repeat intentions to desposit
+            ensure!(Self::intentions_desposit_vec().iter().find(|&t| t == &who).is_none(), "Cannot deposit if already in queue.");
+
+            //check the validity and number of signatures
+            runtime_io::print("开始检查签名");
+            match  Self::check_signature(sender.clone(), tx_hash, signature_hash, tx_hash){
+                Ok(y) =>  runtime_io::print("ok") ,
+                Err(x) => return Err(x),
+            }
+            // update the list of intentions to desposit
+            runtime_io::print("more 抵押账号通过验证=>存储其 accountid 和 balance 入intentions");
+            // update the list of intentions to desposit
+            <IntentionsDespositVec<T>>::put({
+                let mut v =  Self::intentions_desposit_vec();
+                v.push(who.clone());
+                v
+            });
+            // 追加投资标记  MoreDesposit
+            <MoreDesposit<T>>::insert(who.clone(),true);
+            <IntentionsDesposit<T>>::insert(who.clone(),T::Balance::sa(amount as u64));
+            // 发送一个event
+            Self::deposit_event(RawEvent::AddMoreDepositingQueue(who));
+            Ok(())
+        }
+
+
         /// 直接传参数抵押测试用接口
         pub fn deposit2  (origin, hash: T::Hash, _tag: T::Hash, id: T::AccountId,amount: T::Balance, signature: Vec<u8>) -> Result {
             let sender = ensure_signed(origin)?;
@@ -306,9 +345,11 @@ decl_storage! {
         /// 全链总余额
         TotalDespositingBalacne  get(total_despositing_balance) config(): T::Balance;
 
-        /// 投资比例
+        /// 投资削减比例
         DespositExchangeRate get(desposit_exchange_rate) :  u64 = 10000000000000;
 
+        /// 是否是追加
+        MoreDesposit get(more_desposit) : map T::AccountId =>  Option<bool>;
         save get(save_tx) : Vec<Vec<u8>>;
     }
 }
@@ -327,6 +368,8 @@ decl_event! {
 		Reward(Balance),
 		/// accountid added to the intentions to deposit queue
 		AddDepositingQueue(AccountId),
+		/// 追加投资
+		AddMoreDepositingQueue(AccountId),
 		/// intentions to withdraw
 		AddWithdrawQueue(AccountId),
         /// a new seesion start
@@ -441,15 +484,23 @@ impl<T: Trait> Module<T>
         let mut int_des_vec =  Self::intentions_desposit_vec();
         let mut des_vec = Self::despositing_account();
         while let  Some(who)=int_des_vec.pop(){
-            runtime_io::print("========add===========");
             //更新正在抵押人列表
             let balances = <IntentionsDesposit<T>>::get(who.clone());
-            <DespositingBalance<T>>::insert(who.clone(), balances );
-            <DespositingTime<T>>::insert(who.clone(), 0);
+            //if Self::more_desposit(&who).is_none() {
+            if <MoreDesposit<T>>::get(&who).is_none() {
+                runtime_io::print("========first_desposit===========");
+                <DespositingBalance<T>>::insert(who.clone(), balances);
+                <DespositingTime<T>>::insert(who.clone(), 0);
+            }else {
+                runtime_io::print("========more_desposit===========");
+                let now_desposit_balance = Self::despositing_banance(&who);
+                <DespositingBalance<T>>::insert(who.clone(), balances+now_desposit_balance);
+                <MoreDesposit<T>>::remove(&who);
+            }
             des_vec.push(who.clone());
 
             let total_deposit_balance = <TotalDespositingBalacne<T>>::get();
-            <TotalDespositingBalacne<T>>::put(balances+total_deposit_balance);
+            <TotalDespositingBalacne<T>>::put(balances + total_deposit_balance);
             <IntentionsDesposit<T>>::remove(who);
         }
         <DespoitingAccount<T>>::put(des_vec);
