@@ -44,6 +44,7 @@ extern crate substrate_consensus_aura_primitives as consensus_aura;
 pub mod matrix;
 pub mod sigcount;
 pub mod bank;
+pub mod votereward;
 
 use rstd::prelude::*;
 use substrate_primitives::u32_trait::{_2, _4};
@@ -78,6 +79,7 @@ pub use balances::Call as BalancesCall;
 pub use matrix::Call as MatrixCall;
 pub use sigcount::Call as SigCall;
 pub use bank::Call as BankCall;
+pub use votereward::Call as VoteCall;
 pub use runtime_primitives::{Permill, Perbill};
 pub use srml_support::{StorageValue, RuntimeMetadata};
 pub use system::EventRecord;
@@ -223,6 +225,11 @@ impl sigcount::Trait for Runtime {
 	type Event = Event;
 }
 
+impl votereward::Trait for Runtime {
+	type Event = Event;
+}
+
+
 construct_runtime!(
 	pub enum Runtime with Log(InternalLog: DigestItem<Hash, SessionKey>) where
 		Block = Block,
@@ -249,6 +256,7 @@ construct_runtime!(
         Matrix: matrix::{Module, Call, Storage, Event<T>},
         Sigcount: sigcount::{Module, Call, Storage,Event<T>},
         Bank: bank::{Module, Call, Storage, Event<T>,Config<T>},
+        Vote: votereward::{Module, Call, Storage, Event<T>},
 	}
 );
 
