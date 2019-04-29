@@ -33,6 +33,7 @@ extern crate srml_consensus as consensus;
 extern crate srml_timestamp as timestamp;
 extern crate srml_finality_tracker as finality_tracker;
 extern crate substrate_consensus_aura_primitives as consensus_aura;
+extern crate lightether;
 
 pub mod bank;
 pub mod matrix;
@@ -266,6 +267,9 @@ impl exchangerate::Trait for Runtime {
 	type Event = Event;
 }
 
+impl lightether::Trait for Runtime {
+    type Event = Event;
+}
 
 construct_runtime!(
     pub enum Runtime with Log(InternalLog: DigestItem<Hash, SessionKey>) where
@@ -289,6 +293,7 @@ construct_runtime!(
         Sigcount: sigcount::{Module, Call, Storage, Event<T>},
         Bank: bank::{Module, Call, Storage, Event<T>,Config<T>},
         Exchangerate: exchangerate::{Module, Call, Storage, Event<T>},
+        LightEther: lightether::{Module, Call, Storage, Event<T>},
 	}
 );
 

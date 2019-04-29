@@ -1,7 +1,8 @@
 [package]
-name = "node-runtime"
+name = "lightether"
 version = "0.1.0"
-authors = ["Abmatrix <http://www.abmatrix.org>"]
+authors = ["kayryu <lukayryu@gmail.com>"]
+edition = "2018"
 
 [dependencies]
 rustc-hex = { version = "1.0", optional = true }
@@ -33,7 +34,6 @@ srml-finality-tracker = { git = "https://github.com/paritytech/substrate", defau
 substrate-client = { git = "https://github.com/paritytech/substrate", default-features = false }
 sr-version = { git = "https://github.com/paritytech/substrate", default-features = false }
 substrate-consensus-aura-primitives = { git = "https://github.com/paritytech/substrate", default-features = false }
-lightether = { path = "../lightether", default-features = false }
 
 [features]
 default = ["std"]
@@ -65,5 +65,4 @@ std = [
 	"rustc-hex",
 	"serde",
 	"substrate-keyring",
-    "lightether/std",
 ]

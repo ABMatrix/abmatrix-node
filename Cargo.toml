@@ -35,6 +35,7 @@ signer = { path = "./vendor/signer" }
 members = [
     "runtime",
     "vendor",
+    "lightether"
 ]
 
 [build-dependencies]

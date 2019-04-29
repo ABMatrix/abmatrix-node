@@ -1,0 +1,20 @@
+[package]
+name = "rlp"
+version = "0.3.0"
+description = "Recursive-length prefix encoding, decoding, and compression"
+repository = "https://github.com/paritytech/parity-common"
+license = "MIT/Apache-2.0"
+authors = ["Parity Technologies <admin@parity.io>"]
+
+[dependencies]
+byteorder = { version = "1.0", default-features = false }
+rustc-hex = { version = "2.0", default-features = false }
+primitives = { path = "../primitives", default-features = false }
+
+[dev-dependencies]
+hex-literal = "0.1"
+
+[features]
+default = ["std", "serialize"]
+std = ["primitives/std", "rustc-hex/std", "byteorder/std"]
+serialize = ["primitives/serialize"]

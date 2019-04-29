@@ -1,0 +1,15 @@
+[package]
+description = "Rust bindings for tinykeccak C library"
+homepage = "https://github.com/paritytech/keccak-hash"
+license = "GPL-3.0"
+name = "keccak"
+version = "0.1.1"
+authors = ["Parity Technologies <admin@parity.io>"]
+
+[dependencies]
+tiny-keccak = "1.4"
+primitives = { path = "../primitives", default-features = false }
+
+[features]
+default = ["std"]
+std = ["primitives/std"]
